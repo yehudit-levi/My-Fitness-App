@@ -1,0 +1,36 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+/* index.css או App.css */
+body {
+  direction: rtl;
+  text-align: right;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+.header
+{
+    width: 100%;
+    height: 33%;
+    background-color: rgb(19, 155, 218);
+}
+.body
+{
+    width: 100%;
+    height: 33%;
+    background-color: rgb(19, 218, 162);
+}
+.footer
+{
+    width: 100%;
+    height: 33%;
+    background-color: rgb(155, 19, 218);
+}
