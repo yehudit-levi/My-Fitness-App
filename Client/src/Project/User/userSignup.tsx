@@ -73,13 +73,27 @@ const UserForm: React.FC = () => {
         event.preventDefault();
     };
 
+    // מכסת ה-Cloudinary (התוכנית החינמית) מגבילה קבצי תמונה ל-10MB - בודקים מראש בצד הלקוח
+    // כדי לתת משוב מיידי במקום לחכות להעלאה שתיכשל בשרת.
+    const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (files && files.length > 0) {
+            const file = files[0];
+            if (file.size > MAX_IMAGE_SIZE_BYTES) {
+                setErrors(prevErrors => ({
+                    ...prevErrors,
+                    profilePicturePath: 'התמונה גדולה מדי (מקסימום 10MB) - נא לבחור תמונה קטנה יותר',
+                }));
+                e.target.value = '';
+                return;
+            }
+            setErrors(prevErrors => ({ ...prevErrors, profilePicturePath: '' }));
             setUserData(prevState => ({
                 ...prevState,
-                profilePicturePath: files[0].name,
-                profilePicture: files[0],
+                profilePicturePath: file.name,
+                profilePicture: file,
             }));
         }
     };
@@ -156,6 +170,8 @@ const UserForm: React.FC = () => {
             if (error?.response?.status === 409) {
                 // השרת מחזיר 409 (Conflict) כשכבר קיים משתמש עם כתובת האימייל הזו
                 alert(error.response.data || 'כבר קיים משתמש רשום עם כתובת האימייל הזו');
+            } else if (error?.response?.status === 400 && error?.response?.data) {
+                alert(error.response.data);
             } else {
                 alert('אירעה שגיאה בהרשמה. נסי שוב.');
             }

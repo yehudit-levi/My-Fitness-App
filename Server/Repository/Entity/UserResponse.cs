@@ -22,8 +22,9 @@ namespace Repository.Entity
         public string? Password { get; set; }
         public string? ProfilePicturePath { get; set; }
         public string? Token { get; set; }
+        // ProfilePicturePath מכיל כעת URL מלא (Cloudinary) - הלקוח משתמש בו ישירות כ-src של תמונה,
+        // ואין יותר צורך לשלוח את בייטים של התמונה (base64) בתוך התגובה.
         public IFormFile? ProfilePicture { get; set; }
-        public FileContentResult? ProfilePictureData { get; set; }
         public bool IsCoach { get; set; } = false;
         public string? CertificationPath { get; set; }
 

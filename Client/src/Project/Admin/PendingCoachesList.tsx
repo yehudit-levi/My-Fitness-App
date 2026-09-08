@@ -152,7 +152,7 @@ const PendingCoachesList: React.FC = () => {
                                             size="small"
                                             variant="outlined"
                                             startIcon={<DescriptionIcon />}
-                                            onClick={() => window.open(`data:image;base64,${req.certificationData?.fileContents || ""}`)}
+                                            onClick={() => window.open(req.certificationPath, '_blank')}
                                         >
                                             צפה בתעודה
                                         </Button>

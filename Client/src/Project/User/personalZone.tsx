@@ -135,7 +135,7 @@ export default function PersonalZone() {
             >
                 <Avatar
                     sx={{ width: 120, height: 120, mx: 'auto', mb: 2, fontSize: '2.5rem' }}
-                    src={currentUser?.user?.profilePictureData?.fileContents ? `data:${currentUser.user.profilePictureData.contentType || "image/jpeg"};base64,${currentUser.user.profilePictureData.fileContents}` : undefined}
+                    src={currentUser?.user?.profilePicturePath || undefined}
                 >
                     {/* אם אין תמונה, יוצגו האותיות הראשונות של השם */}
                     {currentUser.user?.username?.charAt(0).toUpperCase()}

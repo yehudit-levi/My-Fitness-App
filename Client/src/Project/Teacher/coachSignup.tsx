@@ -58,11 +58,22 @@ const CoachForm: React.FC = () => {
         checkStatus();
     }, [userId]);
 
+    // מכסת ה-Cloudinary (התוכנית החינמית) מגבילה קבצי תמונה ל-10MB - בודקים מראש בצד הלקוח
+    // כדי לתת משוב מיידי במקום לחכות להעלאה שתיכשל בשרת.
+    const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+
     const handleCertificationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (files && files.length > 0) {
-            setCertification(files[0]);
-            setCertificationName(files[0].name);
+            const file = files[0];
+            if (file.size > MAX_IMAGE_SIZE_BYTES) {
+                setError('התעודה גדולה מדי (מקסימום 10MB) - נא לבחור קובץ קטן יותר');
+                e.target.value = '';
+                return;
+            }
+            setError('');
+            setCertification(file);
+            setCertificationName(file.name);
         }
     };
 

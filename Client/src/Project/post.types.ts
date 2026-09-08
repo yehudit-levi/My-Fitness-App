@@ -60,10 +60,6 @@ export type UserResponseType={
   profilePicturePath:string;
   token:string;
   profilePicture?:string;
-  profilePictureData: {
-    fileContents:string
-    contentType?:string
-   }
   isCoach:boolean;
   certificationPath?:string;
 }
@@ -83,9 +79,6 @@ export type CoachRequestResponseType={
   username:string;
   email:string;
   certificationPath?:string;
-  certificationData?: {
-    fileContents:string
-  }
 }
 export type ExerciseResponseType={
   id: number;
