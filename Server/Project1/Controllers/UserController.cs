@@ -44,7 +44,6 @@ namespace Project1.Controllers
                     ProfilePicturePath = i.ProfilePicturePath,
                     ProfilePicture = i.ProfilePicture,
                     Token = i.Token,
-                    ProfilePictureData = null,
                     IsCoach = i.IsCoach,
                     CertificationPath = i.CertificationPath,
                 };
@@ -59,12 +58,9 @@ namespace Project1.Controllers
             var user = await service.GetByIdAsync(id);
             if (user == null || string.IsNullOrEmpty(user.ProfilePicturePath)) return NotFound();
 
-            var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, user.ProfilePicturePath.TrimStart('\\', '/'));
-
-            if (!System.IO.File.Exists(filePath)) return NotFound("File not found on disk");
-
-            var bytes = await System.IO.File.ReadAllBytesAsync(filePath);
-            return File(bytes, "image/jpeg");
+            // התמונה כבר שמורה בענן (Cloudinary) - ProfilePicturePath מכיל כתובת URL מלאה,
+            // אז פשוט מפנים אליה במקום לקרוא קובץ מהדיסק המקומי.
+            return Redirect(user.ProfilePicturePath);
         }
 
         [HttpGet("{id}")]
@@ -84,7 +80,6 @@ namespace Project1.Controllers
                     ProfilePicturePath = user.ProfilePicturePath,
                     ProfilePicture = user.ProfilePicture,
                     Token = user.Token,
-                    ProfilePictureData = null,
                     IsCoach = user.IsCoach,
                     CertificationPath = user.CertificationPath,
                 };
@@ -112,8 +107,17 @@ namespace Project1.Controllers
             if (emailAlreadyExists)
                 return Conflict("כבר קיים משתמש רשום עם כתובת האימייל הזו");
 
-            UserDto res = await service.AddItemAsync(data);
-            return Ok(res);
+            // העלאת התמונה (בתוך AddItemAsync) יכולה להיכשל עם ArgumentException אם הקובץ גדול מדי
+            // או לא נתמך - תופסים את זה כאן ומחזירים הודעה ברורה במקום 500 גנרי.
+            try
+            {
+                UserDto res = await service.AddItemAsync(data);
+                return Ok(res);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPut("{id}")]
@@ -170,18 +174,6 @@ namespace Project1.Controllers
             {
                 var token = Generate(user);
 
-                // הגנה: אם טעינת התמונה נכשלת מכל סיבה (קובץ חסר/נתיב לא תקין וכו'),
-                // לא רוצים שכל תהליך ההתחברות ייכשל (500) בגללה - פשוט לא תוצג תמונה.
-                FileContentResult profilePictureData = null;
-                try
-                {
-                    profilePictureData = ImageHelper.GetImageAsync(user, user.ProfilePicturePath) as FileContentResult;
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Failed to load profile picture for user {user.Id}: {ex.Message}");
-                }
-
                 var userResponse = new UserResponse
                 {
                     Id = user.Id,
@@ -190,7 +182,6 @@ namespace Project1.Controllers
                     Email = user.Email,
                     ProfilePicturePath = user.ProfilePicturePath,
                     Token = token,
-                    ProfilePictureData = profilePictureData,
                     IsCoach = user.IsCoach,
                     CertificationPath = user.CertificationPath,
                 };

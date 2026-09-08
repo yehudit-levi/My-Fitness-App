@@ -1,6 +1,7 @@
 using AutoMapper;
 using Common;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Repository.Entity;
 using Repository.Interfaces;
 using Repository.Repositories;
@@ -16,54 +17,25 @@ namespace Service
     {
         private readonly IRepository<CoachRequests> requestRepository;
         private readonly IMapper mapper;
-        public CoachRequestsService(IRepository<CoachRequests> requestRepository, IMapper mapper)
+        private readonly IConfiguration configuration;
+        public CoachRequestsService(IRepository<CoachRequests> requestRepository, IMapper mapper, IConfiguration configuration)
         {
             this.requestRepository = requestRepository;
             this.mapper = mapper;
+            this.configuration = configuration;
         }
 
         public async Task<CoachRequestDto> AddItemAsync(CoachRequestDto item)
         {
             if (item.Certification != null && item.Certification.Length > 0)
             {
-                item.CertificationPath = await UploadImageAsync(item.Certification);
+                // תעודת ההסמכה נשמרת בענן (Cloudinary) ולא על דיסק השרת - CertificationPath מכיל
+                // מעכשיו את כתובת ה-URL המלאה, לא נתיב מקומי.
+                item.CertificationPath = await CloudinaryHelper.UploadImageAsync(configuration, item.Certification, "coach-certifications");
             }
 
             CoachRequests request = await requestRepository.addAsync(mapper.Map<CoachRequests>(item));
             return mapper.Map<CoachRequestDto>(request);
-        }
-
-        private static async Task<string> UploadImageAsync(IFormFile image)
-        {
-            if (image == null || image.Length == 0)
-            {
-                throw new ArgumentException("No image provided or image is empty.");
-            }
-
-            // בדיקת סוג הקובץ
-            string[] allowedExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif" };
-            string extension = Path.GetExtension(image.FileName).ToLowerInvariant();
-            if (!allowedExtensions.Contains(extension))
-            {
-                throw new ArgumentException("Invalid image file type.");
-            }
-
-            // נתיב השמירה - יחסי לתיקיית ההרצה של השרת, אותה תיקייה שממנה Program.cs מגיש את התמונות
-            string directoryPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images");
-
-            if (!Directory.Exists(directoryPath))
-            {
-                Directory.CreateDirectory(directoryPath);
-            }
-
-            string filePath = Path.Combine(directoryPath, image.FileName);
-
-            using (FileStream stream = new FileStream(filePath, FileMode.Create))
-            {
-                await image.CopyToAsync(stream);
-            }
-
-            return filePath;
         }
 
         public async Task DeleteByIdAsync(int id)

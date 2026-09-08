@@ -36,8 +36,6 @@ namespace Project1.Controllers
                 var user = await userService.GetByIdAsync(request.UserId);
                 if (user == null) continue;
 
-                var certImage = ImageHelper.GetImageAsync(request, request.CertificationPath);
-
                 responses.Add(new CoachRequestResponse
                 {
                     Id = request.Id,
@@ -45,7 +43,6 @@ namespace Project1.Controllers
                     Username = user.Username,
                     Email = user.Email,
                     CertificationPath = request.CertificationPath,
-                    CertificationData = certImage as FileContentResult,
                 });
             }
 
@@ -61,8 +58,6 @@ namespace Project1.Controllers
             var user = await userService.GetByIdAsync(request.UserId);
             if (user == null) return NotFound();
 
-            var certImage = ImageHelper.GetImageAsync(request, request.CertificationPath);
-
             var response = new CoachRequestResponse
             {
                 Id = request.Id,
@@ -70,7 +65,6 @@ namespace Project1.Controllers
                 Username = user.Username,
                 Email = user.Email,
                 CertificationPath = request.CertificationPath,
-                CertificationData = certImage as FileContentResult,
             };
 
             return Ok(response);

@@ -1,6 +1,7 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Common;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Repository.Entity;
 using Repository.Interfaces;
 using System;
@@ -16,11 +17,13 @@ namespace Service
         private readonly IRepository<User> userRepository;
         //private readonly IUserRepository userRepository;
         private readonly IMapper mapper;
+        private readonly IConfiguration configuration;
 
-        public UserService(IRepository<User> userRepository, IMapper mapper)
+        public UserService(IRepository<User> userRepository, IMapper mapper, IConfiguration configuration)
         {
             this.userRepository = userRepository;
             this.mapper = mapper;
+            this.configuration = configuration;
         }
         public async Task<UserDto> AddItemAsync(UserDto item)
         {           
@@ -30,28 +33,13 @@ namespace Service
                 int num = 0;
                 
             }
-            var  path = await UploadImageAsync(item.ProfilePicture);
+            // תמונת הפרופיל נשמרת בענן (Cloudinary) ולא על דיסק השרת - ProfilePicturePath מכיל
+            // מעכשיו את כתובת ה-URL המלאה של התמונה, לא נתיב מקומי.
+            var path = await CloudinaryHelper.UploadImageAsync(configuration, item.ProfilePicture, "profile-pictures");
             item.ProfilePicturePath = path;
 
           User user=  await userRepository.addAsync(mapper.Map<User>(item));
             return mapper.Map<UserDto>(user);
-        }
-        private static async Task<string> UploadImageAsync(IFormFile image)
-        {
-            // נתיב יחסי לתיקיית ההרצה של השרת - אותה תיקיית Images שממנה Program.cs מגיש תמונות,
-            // וזהה לנתיב שממנו UserController.GetProfileImage קורא בחזרה.
-            string directoryPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images");
-            if (!Directory.Exists(directoryPath))
-            {
-                Directory.CreateDirectory(directoryPath);
-            }
-            string path = Path.Combine(directoryPath, image.FileName);
-            using (FileStream stream = new(path, FileMode.Create))
-            {
-                await image.CopyToAsync(stream);
-                stream.Close();
-            }
-            return path;
         }
         public async Task DeleteByIdAsync(int id)
         {

@@ -3,30 +3,20 @@ import { PATHS } from '../PATHS';
 import { AuthUserType, UserResponseType } from "../post.types";
 
 export const setSession = (userResponse: AuthUserType) => {
-    // תיקון שורש: מחרוזת ה-base64 של תמונת הפרופיל (profilePictureData.fileContents) יכולה
-    // בקלות להגיע למגה-בייטים בודדים, וזה בדיוק מה שגורם ל-QuotaExceededError בכל התחברות
-    // (מכסת localStorage היא בד"כ כ-5-10MB לכל האתר, ביחד). אין סיבה לשמור את זה ב-localStorage:
-    // ה-state המלא (כולל התמונה) כבר נשמר ב-Redux (ר' dispatch(setUser(...)) לפני הקריאה לכאן)
-    // וזה מה שכל הקומפוננטות בפועל קוראות מהן. ב-localStorage שומרים רק גרסה "קלה" של הסשן,
-    // שמספיקה כדי לשחזר את המשתמש אחרי רענון דף (ר' initializedAuth.tsx).
-    const lightUserResponse: AuthUserType = {
-        ...userResponse,
-        user: {
-            ...userResponse.user,
-            profilePictureData: undefined as any,
-        },
-    };
+    // מאז המעבר לאחסון תמונות בענן (Cloudinary), profilePicturePath הוא כתובת URL קצרה
+    // (לא עוד base64 שעלול לתפוס מגה-בייטים) - כך שאין יותר סיכון לחרוג ממכסת ה-localStorage,
+    // ואפשר לשמור את כל האובייקט כמו שהוא בלי "גרסה קלה" מיוחדת.
     try {
-        localStorage.setItem('user', JSON.stringify(lightUserResponse));
+        localStorage.setItem('user', JSON.stringify(userResponse));
     } catch (error) {
-        // הגנת-על נוספת: אם עדיין נתקלים במכסה מלאה (למשל שאריות ישנות מלפני התיקון הזה),
+        // הגנת-על: אם בכל זאת נתקלים במכסה מלאה (למשל שאריות ישנות מ-localStorage),
         // מנקים את כל המפתחות הישנים של redux-persist ומנסים שוב פעם אחת.
         console.warn('Could not persist session to localStorage (it may be full) - clearing old persisted data and retrying:', error);
         try {
             Object.keys(localStorage)
                 .filter((key) => key.startsWith('persist:'))
                 .forEach((key) => localStorage.removeItem(key));
-            localStorage.setItem('user', JSON.stringify(lightUserResponse));
+            localStorage.setItem('user', JSON.stringify(userResponse));
         } catch (retryError) {
             console.warn('Still could not persist session to localStorage after cleanup:', retryError);
         }

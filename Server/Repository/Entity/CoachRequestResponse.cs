@@ -17,6 +17,5 @@ namespace Repository.Entity
         public string? Username { get; set; }
         public string? Email { get; set; }
         public string? CertificationPath { get; set; }
-        public FileContentResult? CertificationData { get; set; }
     }
 }
