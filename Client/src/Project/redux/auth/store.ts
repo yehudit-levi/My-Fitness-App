@@ -25,7 +25,11 @@ const rootReducer = combineReducers({
 
 const persistConfig = {
   key: 'root',
-  storage
+  storage,
+  // חשוב: לא לשמור ב-localStorage מצבים שעלולים להכיל מדיה בבסיס 64 (וידאו/תמונות של תרגילים ומאמנים) -
+  // אלו יכולים בקלות לחרוג ממכסת האחסון של הדפדפן (בד"כ כ-5-10MB לאתר), ואז כל כתיבה נוספת ל-localStorage
+  // בכל מקום באתר (כולל login) נכשלת עם QuotaExceededError. הנתונים האלה ממילא נטענים מחדש מהשרת בכל טעינת עמוד.
+  blacklist: ['teacher', 'currentTeacher', 'currentExercise', 'users', 'auth']
 }
 
 const persistedReducer = persistReducer(persistConfig, rootReducer)

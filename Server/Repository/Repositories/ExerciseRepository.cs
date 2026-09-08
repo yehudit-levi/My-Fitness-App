@@ -64,33 +64,48 @@ namespace Repository.Repositories
 
         public async Task<Exercise> addFavoritedUser(int userId, int exerciseId)
         {
-            Exercise ex = await getByIdAsync(exerciseId);
-            //User user = _context.UsersList.FirstOrDefault(x=>x.Id == userId);
-            //if(ex != null&&user!=null) 
-            //{
-            //    if(ex.FavoriteExercises==null)
-            //    { 
-            //        ex.FavoriteExercises=new HashSet<User>();
-            //    }
-            //    ex.FavoriteExercises.Add(user);
-            //    await _context.Save();
-                
-            //}
+            // תיקון: קודם זה היה שדה-צל יחיד (מועדף אחד בלבד לכל משתמש, שלחיצה חדשה
+            // פשוט דרסה). עכשיו זה יחס many-to-many אמיתי (דרך Exercise.FavoriteExercises /
+            // User.FavoriteExercises) - כך שאפשר לצבור רשימה שלמה של מועדפים לכל משתמש.
+            Exercise ex = await _context.ExercisesList
+                .Include(e => e.FavoriteExercises)
+                .FirstOrDefaultAsync(x => x.Id == exerciseId);
+            User user = await _context.UsersList.FirstOrDefaultAsync(x => x.Id == userId);
+            if (ex != null && user != null)
+            {
+                if (!ex.FavoriteExercises.Any(u => u.Id == userId))
+                {
+                    ex.FavoriteExercises.Add(user);
+                    await _context.Save();
+                }
+            }
             return ex;
         }
 
         public async Task deleteFavoritedUserAsync(int userId, int exerciseId)
         {
-            //Exercise ex= await getByIdAsync(exerciseId);
-            //User user = _context.UsersList.FirstOrDefault(x => x.Id == userId);
-            //if (ex != null && user != null)
-            //{
-            //    ex.FavoriteExercises.Remove(user);
-            //    await _context.Save();
-            //}
+            Exercise ex = await _context.ExercisesList
+                .Include(e => e.FavoriteExercises)
+                .FirstOrDefaultAsync(x => x.Id == exerciseId);
+            if (ex != null)
+            {
+                var favoriteUser = ex.FavoriteExercises.FirstOrDefault(u => u.Id == userId);
+                if (favoriteUser != null)
+                {
+                    ex.FavoriteExercises.Remove(favoriteUser);
+                    await _context.Save();
+                }
+            }
         }
 
-      
+        // כל התרגילים שהמשתמש הנתון סימן כמועדפים (לרשימת "המועדפים שלי" באזור האישי).
+        public async Task<List<Exercise>> getFavoriteExercisesAsync(int userId)
+        {
+            return await _context.ExercisesList
+                .Where(e => e.FavoriteExercises.Any(u => u.Id == userId))
+                .OrderByDescending(e => e.PublishDate)
+                .ToListAsync();
+        }
 
         public async Task<List<Exercise>> getAllByIdAsync(int id)
         {

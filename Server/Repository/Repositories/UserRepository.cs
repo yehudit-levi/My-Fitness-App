@@ -1,4 +1,4 @@
-﻿using Common;
+using Common;
 using Microsoft.EntityFrameworkCore;
 using Repository.Entity;
 using Repository.Interfaces;
@@ -46,6 +46,16 @@ namespace Repository.Repositories
 
         public async Task updateAsync(User user)
         {
+            // אם כבר קיים מופע (instance) אחר של אותו משתמש שכבר במעקב (tracked) ב-DbContext הנוכחי -
+            // למשל כי קודם באותה בקשה נשלף המשתמש עם getByIdAsync (כמו ב"עדכון בטוח" של פרופיל,
+            // או באישור בקשת מאמן) - חייבים "לשחרר" (detach) אותו לפני שמצרפים את המופע החדש עם
+            // אותו Id, אחרת EF Core זורק שגיאה כי הוא לא יכול לעקוב אחרי שני מופעים שונים עם אותו מפתח.
+            var tracked = _context.UsersList.Local.FirstOrDefault(u => u.Id == user.Id);
+            if (tracked != null)
+            {
+                _context.UsersList.Attach(tracked).State = EntityState.Detached;
+            }
+
             _context.UsersList.Update(user);
             await _context.Save();
         }
@@ -85,6 +95,11 @@ namespace Repository.Repositories
         }
 
         public Task deleteFavoritedUserAsync(int userId, int exerciseId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<List<User>> getFavoriteExercisesAsync(int userId)
         {
             throw new NotImplementedException();
         }

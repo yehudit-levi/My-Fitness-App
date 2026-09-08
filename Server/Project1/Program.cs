@@ -38,7 +38,6 @@ builder.Services.AddServices(@"server=(localdb)\MSSQLLocaldb;database=SportDb;tr
 
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
-builder.Services.AddScoped<IService<CoachDto>, CoachService>();
 builder.Services.AddScoped<IService<CoachRequestDto>, CoachRequestsService>();
 builder.Services.AddScoped<IRepository<CoachRequests>, CoachRequestsRepository>();
 
@@ -54,8 +53,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// הגדרת גישה לתיקיית התמונות הספציפית שלך
-string imagesPath = @"D:\PROJECT\Project1\Project1\Images";
+// תיקיית התמונות מוגדרת יחסית לתיקיית ההרצה של השרת (ולא לנתיב קבוע במחשב מסוים),
+// כדי שהפרויקט ירוץ באותה צורה על כל מחשב.
+string imagesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images");
 
 // בדיקה אם התיקייה קיימת, אם לא - יצירה שלה (מונע שגיאות קריסה בהרצה ראשונה)
 if (!Directory.Exists(imagesPath))

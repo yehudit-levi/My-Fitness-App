@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Repository.Entity;
 using System;
 using System.Collections.Generic;
@@ -10,7 +10,6 @@ namespace Repository.Interfaces
 {
     public interface IContext
     {
-        public DbSet<Coach> CoachesList { get; set; }
         public DbSet<Exercise> ExercisesList { get; set; }
         public DbSet<User> UsersList { get; set; }
         public DbSet<Comment> CommentsList { get; set; }

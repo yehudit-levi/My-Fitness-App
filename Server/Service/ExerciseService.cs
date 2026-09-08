@@ -72,6 +72,11 @@ namespace Service
             await exerciseRepository.deleteFavoritedUserAsync(userId, exerciseId);
         }
 
+        public async Task<List<ExerciseDto>> GetFavoriteExercisesAsync(int userId)
+        {
+            return await mapper.Map<Task<List<ExerciseDto>>>(exerciseRepository.getFavoriteExercisesAsync(userId));
+        }
+
        
 
         Task<List<ExerciseDto>> IService<ExerciseDto>.GetAllByIdAsync(int id)

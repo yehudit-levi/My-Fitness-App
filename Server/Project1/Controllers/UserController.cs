@@ -1,4 +1,4 @@
-﻿//using Azure.Core;
+//using Azure.Core;
 using Common;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Http;
@@ -45,6 +45,8 @@ namespace Project1.Controllers
                     ProfilePicture = i.ProfilePicture,
                     Token = i.Token,
                     ProfilePictureData = null,
+                    IsCoach = i.IsCoach,
+                    CertificationPath = i.CertificationPath,
                 };
                 displayImages.Add(user);
             }
@@ -83,6 +85,8 @@ namespace Project1.Controllers
                     ProfilePicture = user.ProfilePicture,
                     Token = user.Token,
                     ProfilePictureData = null,
+                    IsCoach = user.IsCoach,
+                    CertificationPath = user.CertificationPath,
                 };
                 return Ok(userResponse);
             }
@@ -98,6 +102,16 @@ namespace Project1.Controllers
             if (!data.ProfilePicture.ContentType.StartsWith("image/"))
                 return BadRequest("Uploaded file is not an image");
 
+            // ולידציה: לא מאפשרים להירשם עם כתובת מייל שכבר קיימת במערכת (לא תלוי-רישיות)
+            if (string.IsNullOrWhiteSpace(data.Email))
+                return BadRequest("כתובת אימייל היא שדה חובה");
+
+            var existingUsers = await service.GetAllAsync();
+            bool emailAlreadyExists = existingUsers.Any(u => u.Email != null
+                && u.Email.Trim().ToLower() == data.Email.Trim().ToLower());
+            if (emailAlreadyExists)
+                return Conflict("כבר קיים משתמש רשום עם כתובת האימייל הזו");
+
             UserDto res = await service.AddItemAsync(data);
             return Ok(res);
         }
@@ -105,7 +119,24 @@ namespace Project1.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(int id, [FromBody] UserDto value)
         {
-            await service.UpdateAsync(value);
+            // עדכון "בטוח": שולפים קודם את המשתמש המלא מה-DB וממזגים לתוכו רק את השדות
+            // הניתנים לעריכה מטופס הפרופיל הרגיל. חשוב כי updateAsync בשכבת ה-Repository
+            // מבצע Update מלא (overwrite) של כל האובייקט - אם היינו שולחים ישירות את value
+            // (כפי שמגיע מטופס עדכון הפרופיל, בלי IsCoach/CertificationPath), זה היה מאפס
+            // בטעות את סטטוס ה"מאמן" של כל משתמש שמעדכן את הפרופיל שלו.
+            var existing = await service.GetByIdAsync(id);
+            if (existing == null) return NotFound();
+
+            existing.Username = value.Username;
+            existing.Min = value.Min;
+            existing.Email = value.Email;
+            existing.Password = value.Password;
+            if (!string.IsNullOrWhiteSpace(value.ProfilePicturePath))
+                existing.ProfilePicturePath = value.ProfilePicturePath;
+            // IsCoach, CertificationPath ו-Token לא ניתנים לעדכון דרך טופס עדכון הפרופיל הרגיל -
+            // הם נשארים כפי שהיו.
+
+            await service.UpdateAsync(existing);
             return Ok();
         }
 
@@ -126,7 +157,9 @@ namespace Project1.Controllers
         public class UserResponseWithToken
         {
             public string Token { get; set; }
-            public UserResponse UserResponse { get; set; }
+            // השם "User" (ולא "UserResponse") חשוב: הוא קובע את שם המפתח ב-JSON שחוזר ללקוח,
+            // וכל קוד ה-React (NavBar, personalZone וכו') כבר מצפה לשדה בשם "user".
+            public UserResponse User { get; set; }
         }
 
         [HttpPost("logIn/{email}/{password}")]
@@ -137,20 +170,32 @@ namespace Project1.Controllers
             {
                 var token = Generate(user);
 
+                // הגנה: אם טעינת התמונה נכשלת מכל סיבה (קובץ חסר/נתיב לא תקין וכו'),
+                // לא רוצים שכל תהליך ההתחברות ייכשל (500) בגללה - פשוט לא תוצג תמונה.
+                FileContentResult profilePictureData = null;
+                try
+                {
+                    profilePictureData = ImageHelper.GetImageAsync(user, user.ProfilePicturePath) as FileContentResult;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to load profile picture for user {user.Id}: {ex.Message}");
+                }
+
                 var userResponse = new UserResponse
                 {
                     Id = user.Id,
                     Username = user.Username,
+                    Min = user.Min,
                     Email = user.Email,
                     ProfilePicturePath = user.ProfilePicturePath,
                     Token = token,
-                    // תיקון: שליפת הנתונים מהקובץ במקום null
-                    ProfilePictureData = ImageHelper.GetImageAsync(user, user.ProfilePicturePath) as FileContentResult
-                    
+                    ProfilePictureData = profilePictureData,
+                    IsCoach = user.IsCoach,
+                    CertificationPath = user.CertificationPath,
                 };
-                var x = userResponse;
 
-                return Ok(new UserResponseWithToken() { Token = token, UserResponse = userResponse });
+                return Ok(new UserResponseWithToken() { Token = token, User = userResponse });
             }
             return Unauthorized();
         }

@@ -15,8 +15,9 @@ namespace Repository.Repositories
             // בדיקה אם הקובץ קיים בנתיב המוחלט או היחסי
             if (!File.Exists(path))
             {
-                // אם הקובץ לא נמצא, ננסה לחפש אותו בתיקיית ה-Images שלך ב-:D
-                var alternativePath = Path.Combine(@"D:\PROJECT\Project1\Project1\Images", Path.GetFileName(path));
+                // אם הקובץ לא נמצא בנתיב שנשמר, ננסה לחפש אותו בתיקיית ה-Images
+                // היחסית לתיקיית ההרצה של השרת (אותה תיקייה ש-Program.cs חושף כ-/Images).
+                var alternativePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images", Path.GetFileName(path));
                 if (File.Exists(alternativePath))
                     path = alternativePath;
                 else

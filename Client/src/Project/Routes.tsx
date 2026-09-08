@@ -5,8 +5,8 @@ import UserLogin from './User/userLogin'
 import PersonalZone from './User/personalZone'
 import UserForm from './User/userSignup'
 import CoachForm from './Teacher/coachSignup'
-import CoachLogin from './Teacher/coachLogin'
 import AppLayout from './AppLayout'
+import AuthGuard from './auth/AuthGuard'
 import Try from './try'
 import DisplayExercise from './Exercise/displayExercise'
 import Home from './Home'
@@ -39,20 +39,19 @@ export const router = createBrowserRouter([
             },
             {
                 path: 'exercise',
-                element: <Try/>,
-
+                element: (
+                    <AuthGuard>
+                        <Try/>
+                    </AuthGuard>
+                ),
             },
             {
                 path: 'coachSignup',
-                element: <CoachForm/>,
+                element: <AuthGuard><CoachForm/></AuthGuard>,
             },
             {
                 path: 'coachPersonalZone',
-                element: <AppLayout/>,
-            },
-            {
-                path: 'coachLogin',
-                element: <CoachLogin/>,
+                element: <AuthGuard><AppLayout/></AuthGuard>,
             },
             {
                 path: 'displayExercise',

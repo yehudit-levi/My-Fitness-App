@@ -19,5 +19,6 @@ namespace Service
        public Task AddFavoriteExercise(AddExerciseRequest requwst);
        public Task<T> AddFavoritedUserAsync(int exerciseId, int userId);
         public Task DeleteFavoritedUserAsync(int exerciseId, int userId);
+        public Task<List<T>> GetFavoriteExercisesAsync(int userId);
     }
 }
