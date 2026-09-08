@@ -4,6 +4,7 @@ using DataContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataContext.Migrations
 {
     [DbContext(typeof(MyDataContext))]
-    partial class MyDataContextModelSnapshot : ModelSnapshot
+    [Migration("20260903162453_init5")]
+    partial class init5
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -22,19 +25,35 @@ namespace DataContext.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("ExerciseUser", b =>
+            modelBuilder.Entity("Repository.Entity.Coach", b =>
                 {
-                    b.Property<int>("FavoriteExercisesId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int>("FavoriteExercisesId1")
-                        .HasColumnType("int");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.HasKey("FavoriteExercisesId", "FavoriteExercisesId1");
+                    b.Property<string>("CertificationPath")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.HasIndex("FavoriteExercisesId1");
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.ToTable("ExerciseUser");
+                    b.Property<string>("FullName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Password")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProfilePicturePath")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Token")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CoachesList");
                 });
 
             modelBuilder.Entity("Repository.Entity.CoachRequests", b =>
@@ -48,8 +67,20 @@ namespace DataContext.Migrations
                     b.Property<string>("CertificationPath")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FullName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Password")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProfilePicturePath")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Token")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -130,14 +161,11 @@ namespace DataContext.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("CertificationPath")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Email")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsCoach")
-                        .HasColumnType("bit");
+                    b.Property<int?>("ExerciseId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Min")
                         .HasColumnType("nvarchar(max)");
@@ -156,22 +184,9 @@ namespace DataContext.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ExerciseId");
+
                     b.ToTable("UsersList");
-                });
-
-            modelBuilder.Entity("ExerciseUser", b =>
-                {
-                    b.HasOne("Repository.Entity.User", null)
-                        .WithMany()
-                        .HasForeignKey("FavoriteExercisesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Repository.Entity.Exercise", null)
-                        .WithMany()
-                        .HasForeignKey("FavoriteExercisesId1")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Repository.Entity.Comment", b =>
@@ -195,13 +210,25 @@ namespace DataContext.Migrations
 
             modelBuilder.Entity("Repository.Entity.Exercise", b =>
                 {
-                    b.HasOne("Repository.Entity.User", "Coach")
+                    b.HasOne("Repository.Entity.Coach", "Coach")
                         .WithMany()
                         .HasForeignKey("CoachId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Coach");
+                });
+
+            modelBuilder.Entity("Repository.Entity.User", b =>
+                {
+                    b.HasOne("Repository.Entity.Exercise", null)
+                        .WithMany("FavoriteExercises")
+                        .HasForeignKey("ExerciseId");
+                });
+
+            modelBuilder.Entity("Repository.Entity.Exercise", b =>
+                {
+                    b.Navigation("FavoriteExercises");
                 });
 #pragma warning restore 612, 618
         }

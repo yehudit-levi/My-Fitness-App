@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Common;
 using DataContext;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
@@ -23,7 +23,6 @@ namespace Service
             service.AddRepository();
 
             service.AddScoped<IService<ExerciseDto>, ExerciseService>();
-            service.AddScoped<IService<CoachDto>, CoachService>();
             service.AddScoped<IService<UserDto>, UserService>();
             service.AddScoped<IService<CommentDto>, CommentService>();
 

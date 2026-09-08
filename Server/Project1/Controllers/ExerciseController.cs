@@ -195,6 +195,40 @@ namespace Project1.Controllers
             return NoContent();
         }
 
+        // מסמן תרגיל כמועדף עבור משתמש נתון
+        [HttpPost("{exerciseId}/favorite/{userId}")]
+        public async Task<IActionResult> AddFavorite(int exerciseId, int userId)
+        {
+            var exercise = await exerciseService.AddFavoritedUserAsync(exerciseId, userId);
+            if (exercise == null) return NotFound();
+            return Ok();
+        }
+
+        // מסיר תרגיל מהמועדפים של משתמש נתון
+        [HttpDelete("{exerciseId}/favorite/{userId}")]
+        public async Task<IActionResult> RemoveFavorite(int exerciseId, int userId)
+        {
+            await exerciseService.DeleteFavoritedUserAsync(exerciseId, userId);
+            return Ok();
+        }
+
+        // רשימת כל התרגילים שמשתמש נתון סימן כמועדפים - לתצוגה באזור האישי
+        [HttpGet("favorites/{userId}")]
+        public async Task<List<MiniExerciseResponse>> GetFavorites(int userId)
+        {
+            var exercises = await exerciseService.GetFavoriteExercisesAsync(userId);
+            return exercises.Select(i => new MiniExerciseResponse
+            {
+                Id = i.Id,
+                Description = i.Description,
+                Min = i.Min,
+                ImageOrVideo = i.ImageOrVideo,
+                Category = i.Category,
+                Difficulty = i.Difficulty,
+                CoachId = i.CoachId,
+            }).ToList();
+        }
+
         [HttpDelete("{id}")]
         public async Task Delete(int id)
         {

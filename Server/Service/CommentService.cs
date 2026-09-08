@@ -68,6 +68,11 @@ namespace Service
             throw new NotImplementedException();
         }
 
+        public Task<List<CommentDto>> GetFavoriteExercisesAsync(int userId)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task<List<CommentDto>> GetAllByIdAsync(int id)
         {
             return await mapper.Map<Task<List<CommentDto>>>(fidbekRepository.getAllByIdAsync(id));

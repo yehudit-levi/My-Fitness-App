@@ -1,6 +1,5 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Common;
-using DocumentFormat.OpenXml.Vml.Office;
 using Microsoft.AspNetCore.Http;
 using Repository.Entity;
 using Repository.Interfaces;
@@ -15,41 +14,25 @@ namespace Service
 {
     public class CoachRequestsService : IService<CoachRequestDto>
     {
-        private readonly IRepository<CoachRequests> teacherRequestsRepository;
+        private readonly IRepository<CoachRequests> requestRepository;
         private readonly IMapper mapper;
-        public CoachRequestsService(IRepository<CoachRequests> teacherRequestsRepository, IMapper mapper)
+        public CoachRequestsService(IRepository<CoachRequests> requestRepository, IMapper mapper)
         {
-            this.teacherRequestsRepository = teacherRequestsRepository;
+            this.requestRepository = requestRepository;
             this.mapper = mapper;
         }
 
         public async Task<CoachRequestDto> AddItemAsync(CoachRequestDto item)
         {
-            if (item.ProfilePicture == null || item.ProfilePicture.FileName == null || item.ProfilePicture.FileName.Length == 0)
+            if (item.Certification != null && item.Certification.Length > 0)
             {
-                //return null;
-                int num = 0;
-
+                item.CertificationPath = await UploadImageAsync(item.Certification);
             }
 
-            var path = await UploadImageAsync(item.ProfilePicture);
-            item.ProfilePicturePath = path;
-            path = await UploadImageAsync(item.Certification);
-            item.CertificationPath = path;
-            CoachRequests c = new CoachRequests()
-            {
-                Id = item.Id,
-                FullName = item.FullName,
-                Email = item.Email,
-                Password = item.Password,
-                CertificationPath = item.CertificationPath,
-                ProfilePicturePath = item.ProfilePicturePath,
-                Token = item.Token,
-            };
-            //await teacherRepository.addAsync(c);
-            CoachRequests coach = await teacherRequestsRepository.addAsync(mapper.Map<CoachRequests>(item));
-            return mapper.Map<CoachRequestDto>(coach);
+            CoachRequests request = await requestRepository.addAsync(mapper.Map<CoachRequests>(item));
+            return mapper.Map<CoachRequestDto>(request);
         }
+
         private static async Task<string> UploadImageAsync(IFormFile image)
         {
             if (image == null || image.Length == 0)
@@ -58,26 +41,23 @@ namespace Service
             }
 
             // בדיקת סוג הקובץ
-            string[] allowedExtensions = { ".jpg", ".jpeg", ".png", ".gif" };
+            string[] allowedExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif" };
             string extension = Path.GetExtension(image.FileName).ToLowerInvariant();
             if (!allowedExtensions.Contains(extension))
             {
                 throw new ArgumentException("Invalid image file type.");
             }
 
-            // נתיב השמירה בנתיב קבוע
-            string directoryPath = @"C:\Images\";
+            // נתיב השמירה - יחסי לתיקיית ההרצה של השרת, אותה תיקייה שממנה Program.cs מגיש את התמונות
+            string directoryPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images");
 
-            // יצירת תיקייה אם היא לא קיימת
             if (!Directory.Exists(directoryPath))
             {
                 Directory.CreateDirectory(directoryPath);
             }
 
-            // שם הקובץ כולל הנתיב
             string filePath = Path.Combine(directoryPath, image.FileName);
 
-            // שמירת הקובץ
             using (FileStream stream = new FileStream(filePath, FileMode.Create))
             {
                 await image.CopyToAsync(stream);
@@ -86,52 +66,31 @@ namespace Service
             return filePath;
         }
 
-        //private static async Task<string> UploadImageAsync(IFormFile image)
-        //{
-        //    string path = Path.Combine(Environment.CurrentDirectory, "Images/", image.FileName);
-        //    using (FileStream stream = new(path, FileMode.Create))
-        //    {
-        //        await image.CopyToAsync(stream);
-        //        stream.Close();
-        //    }
-        //    return path;
-        //}
-
-
         public async Task DeleteByIdAsync(int id)
         {
-            await teacherRequestsRepository.deleteByIdAsync(id);
+            await requestRepository.deleteByIdAsync(id);
         }
 
         public async Task<List<CoachRequestDto>> GetAllAsync()
         {
-            return await mapper.Map<Task<List<CoachRequestDto>>>(teacherRequestsRepository.getAllAsync());
+            var list = await requestRepository.getAllAsync();
+            return mapper.Map<List<CoachRequestDto>>(list);
         }
 
         public async Task<CoachRequestDto> GetByIdAsync(int id)
         {
-            // 1. מחכים לקבלת הישות (Entity) ממסד הנתונים
-            var coachRequestEntity = await teacherRequestsRepository.getByIdAsync(id);
-
-            // 2. מבצעים את המיפוי על הישות שהתקבלה ולא על ה-Task
-            return mapper.Map<CoachRequestDto>(coachRequestEntity);
+            var requestEntity = await requestRepository.getByIdAsync(id);
+            return mapper.Map<CoachRequestDto>(requestEntity);
         }
-        //public async Task<CoachRequests> GetAllByCoachIdAsync(int id)
-        //{
-        //    // 1. מחכים לקבלת הישות (Entity) ממסד הנתונים
-        //    return await teacherRequestsRepository.getByIdAsync(id);
-
-        //    // 2. מבצעים את המיפוי על הישות שהתקבלה ולא על ה-Task
-
-        //}
 
         public async Task UpdateAsync(CoachRequestDto item)
         {
-            await teacherRequestsRepository.updateAsync(mapper.Map<CoachRequests>(item));
+            await requestRepository.updateAsync(mapper.Map<CoachRequests>(item));
         }
+
         public async Task AddFavoriteExercise(AddExerciseRequest requwst)
         {
-            await teacherRequestsRepository.addFavoriteExercise(requwst);
+            await requestRepository.addFavoriteExercise(requwst);
         }
 
         public Task<CoachRequestDto> AddFavoritedUserAsync(int exerciseId, int userId)
@@ -144,17 +103,17 @@ namespace Service
             throw new NotImplementedException();
         }
 
+        public Task<List<CoachRequestDto>> GetFavoriteExercisesAsync(int userId)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task<List<CoachRequestDto>> GetAllByIdAsync(int id)
         {
             throw new NotImplementedException();
         }
 
-      public  Task<CoachRequests> GetByIdAsync2(int id)
-        {
-            throw new NotImplementedException();
-        }
-
-        Task<List<CoachRequestDto>> IService<CoachRequestDto>.GetAllByCoachIdAsync(int id)
+        public Task<List<CoachRequestDto>> GetAllByCoachIdAsync(int id)
         {
             throw new NotImplementedException();
         }

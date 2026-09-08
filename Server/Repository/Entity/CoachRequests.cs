@@ -7,15 +7,13 @@ using System.Threading.Tasks;
 
 namespace Repository.Entity
 {
+    // בקשת שדרוג ממשתמש רגיל למאמן - מפנה למשתמש קיים (UserId) במקום לשכפל
+    // שם/מייל/סיסמה משלה (איחוד המבנה: מאמן הוא משתמש רגיל עם IsCoach=true).
     [Table("CoachRequests")]
     public class CoachRequests
     {
         public int Id { get; set; }
-        public string? FullName { get; set; }
-        public string? Email { get; set; }
-        public string? Password { get; set; }
+        public int UserId { get; set; }
         public string? CertificationPath { get; set; }
-        public string? ProfilePicturePath { get; set; }
-        public string? Token { get; set; }
     }
 }

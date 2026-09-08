@@ -11,21 +11,20 @@ import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
-import AdbIcon from '@mui/icons-material/Adb';
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import React, { useState } from 'react';
-import { NavConfigType, UserResponseType, UserType } from './post.types';
 import { useDispatch, useSelector } from "react-redux";
-import { selectUser } from "./User/currentUser.selector";
-import { handleShowUserProfile } from "./User/showUserProfile";
-import { setUserSlice } from "./User/currentUser.slice";
 import { selectAuth } from "./redux/auth/auth.selectors";
 import { setUser } from "./redux/auth/auth.slice";
-import { getSession, removeSession, setSession } from "./auth/utils";
+import { removeSession } from "./auth/utils";
 
 export default function ResponsiveAppBar() {
+  // תיקון שורש: קוראים את מצב ההתחברות מ-Redux (currentUser) במקום מ-getSession()/localStorage.
+  // Redux מתעדכן באופן מיידי ואמין ברגע ההתחברות (dispatch(setUser(...))) בלי תלות בהצלחת
+  // כתיבה ל-localStorage (שיכולה להיכשל, למשל בגלל מכסת אחסון) - וזה מה שגרם לנאבבר
+  // להישאר "לא מחובר" גם אחרי התחברות מוצלחת.
   const currentUser = useSelector(selectAuth);
-  const auth = useSelector(selectAuth);
-  const authuser = getSession();
+  const isLoggedIn = !!currentUser?.user?.id;
   const dispatch = useDispatch();
   const settings = ['Profile', 'Account', 'Dashboard', 'Logout'];
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
@@ -52,12 +51,9 @@ export default function ResponsiveAppBar() {
   const handleCloseUserMenu = async (data: string) => {
     setAnchorElUser(null);
     if (data === 'Logout') {
-      const user: UserResponseType = {
-        id: 0, username: "", min: "", email: "", password: "", profilePicturePath: "", token: "", profilePicture: undefined,
-        profilePictureData: {
-          fileContents: ""
-        }
-      };
+      // מנקים את המשתמש המחובר מה-Redux (כולל מה-storage המתמיד של redux-persist),
+      // כדי שמסכים אחרים שקוראים מה-store לא ימשיכו להציג את המשתמש הקודם אחרי ההתנתקות.
+      dispatch(setUser(null));
       removeSession();
       navigate('/home');
     }
@@ -72,7 +68,7 @@ export default function ResponsiveAppBar() {
     <AppBar position="static">
       <Container maxWidth="xl">
         <Toolbar disableGutters sx={{ justifyContent: 'center' }}>
-          <AdbIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1 }} />
+          <FitnessCenterIcon sx={{ display: { xs: 'none', md: 'flex' }, mr: 1, color: 'primary.main' }} />
           <Typography
             variant="h6"
             noWrap
@@ -81,9 +77,8 @@ export default function ResponsiveAppBar() {
             sx={{
               mr: 2,
               display: { xs: 'none', md: 'flex' },
-              fontFamily: 'monospace',
               fontWeight: 700,
-              letterSpacing: '.3rem',
+              letterSpacing: '.1rem',
               color: 'inherit',
               textDecoration: 'none',
             }}
@@ -104,7 +99,7 @@ export default function ResponsiveAppBar() {
               </>
             ))}
 
-            {authuser?.token && (
+            {isLoggedIn && (
               <>
                 <Button
                   key={'/exercise'}
@@ -115,7 +110,7 @@ export default function ResponsiveAppBar() {
                 </Button>
               </>
             )}
-            {authuser?.token && (
+            {isLoggedIn && (
               <>
                 <Button
                   key={'/personalZone'}
@@ -126,7 +121,18 @@ export default function ResponsiveAppBar() {
                 </Button>
               </>
             )}
-            {!authuser?.token && (
+            {isLoggedIn && currentUser?.user?.isCoach && (
+              <>
+                <Button
+                  key={'/coachPersonalZone'}
+                  onClick={(event) => handleOpenNavMenu(event, '/coachPersonalZone')}
+                  sx={{ my: 2, color: 'white', display: 'block' }}
+                >
+                  אזור מאמנים
+                </Button>
+              </>
+            )}
+            {!isLoggedIn && (
               <>
                 <Button
                   key={'/signup2'}
@@ -139,11 +145,11 @@ export default function ResponsiveAppBar() {
             )}
           </Box>
 
-          {authuser?.token && (
+          {isLoggedIn && (
             <Box sx={{ flexGrow: 0 }}>
               <Tooltip title="Open settings">
                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                  <Avatar alt="Remy Sharp" src={`data:image;base64,${authuser?.user?.profilePictureData.fileContents || ""}`} />
+                  <Avatar alt="Remy Sharp" src={currentUser?.user?.profilePictureData?.fileContents ? `data:${currentUser.user.profilePictureData.contentType || "image/jpeg"};base64,${currentUser.user.profilePictureData.fileContents}` : undefined} />
                 </IconButton>
               </Tooltip>
               <Menu

@@ -1,4 +1,4 @@
-﻿//using Microsoft.EntityFrameworkCore;
+//using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -22,10 +22,14 @@ namespace Repository.Entity
         public string? Password { get; set; }
         public string? ProfilePicturePath { get; set; }
         public string? Token { get; set; }
+        public bool IsCoach { get; set; } = false;
+        public string? CertificationPath { get; set; }
         //public IFormFile? ProfilePicture { get; set; }
         //public FileContentResult? ProfilePictureData { get; set; }
 
-        //public ICollection<Exercise>? FavoriteExercises { get; set; } = new HashSet<Exercise>();
+        // ניווט לרשימת התרגילים המועדפים על המשתמש (יחס many-to-many אמיתי מול Exercise.FavoriteExercises -
+        // EF Core יוצר טבלת קישור אוטומטית ביניהם כי משני הצדדים יש ICollection ניווט תואם).
+        public ICollection<Exercise>? FavoriteExercises { get; set; } = new HashSet<Exercise>();
         //public ICollection<Comment>? CommentsOnExercises { get; set; } = new HashSet<Comment>();
 
     }

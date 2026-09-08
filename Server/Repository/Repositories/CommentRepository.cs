@@ -78,6 +78,11 @@ namespace Repository.Repositories
             throw new NotImplementedException();
         }
 
+        public Task<List<Comment>> getFavoriteExercisesAsync(int userId)
+        {
+            throw new NotImplementedException();
+        }
+
         public async  Task<List<Comment>> getAllByIdAsync(int id)
         {
             return await _context.CommentsList

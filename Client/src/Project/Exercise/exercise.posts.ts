@@ -36,15 +36,14 @@ export const addExerciseApi = async (newExercise: FormData) => {
     //return post.id
 }
 export const addToFavoritesApi = async (userId: number,exerciseId:number) => {
-    
-    await axios.post(`/Exercise/${exerciseId}/favorite/${userId}`,userId)
-   //await response.data
-   //return post.id
+    await axios.post(`/Exercise/${exerciseId}/favorite/${userId}`)
 }
 export const removeFromFavoritesApi = async (userId: number,exerciseId:number) => {
-    await axios.post(`/Exercise/AddFavorite`,userId)
-   //await response.data
-   //return post.id
+    await axios.delete(`/Exercise/${exerciseId}/favorite/${userId}`)
+}
+export const getFavoriteExercisesApi = async (userId: number): Promise<MiniExerciseType[]> => {
+    const response = await axios.get(`/Exercise/favorites/${userId}`)
+    return response.data
 }
 export const updateExerciseApi = async (ExerciseToUpdate: ExerciseType, id: number): Promise<ExerciseType> => {
     const response = await axios.put(`/Exercise/${id}`, ExerciseToUpdate)

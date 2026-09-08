@@ -18,6 +18,7 @@ namespace Repository.Interfaces
         Task addFavoriteExercise(AddExerciseRequest requwst);
         Task<T> addFavoritedUser(int userId, int exerciseId);
         Task deleteFavoritedUserAsync(int userId, int exerciseId);
+        Task<List<T>> getFavoriteExercisesAsync(int userId);
         Task<List<T>> getAllByIdAsync(int id);
     }
 }

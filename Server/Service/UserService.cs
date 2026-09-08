@@ -38,7 +38,14 @@ namespace Service
         }
         private static async Task<string> UploadImageAsync(IFormFile image)
         {
-            string path = Path.Combine(Environment.CurrentDirectory, "Images/", image.FileName);
+            // נתיב יחסי לתיקיית ההרצה של השרת - אותה תיקיית Images שממנה Program.cs מגיש תמונות,
+            // וזהה לנתיב שממנו UserController.GetProfileImage קורא בחזרה.
+            string directoryPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Images");
+            if (!Directory.Exists(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath);
+            }
+            string path = Path.Combine(directoryPath, image.FileName);
             using (FileStream stream = new(path, FileMode.Create))
             {
                 await image.CopyToAsync(stream);
@@ -77,6 +84,11 @@ namespace Service
         }
 
         public Task DeleteFavoritedUserAsync(int exerciseId, int userId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<List<UserDto>> GetFavoriteExercisesAsync(int userId)
         {
             throw new NotImplementedException();
         }

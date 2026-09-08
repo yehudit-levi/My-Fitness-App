@@ -47,6 +47,8 @@ export type UserType={
     profilePicturePath:string;
     token:string;
     profilePicture?:File;
+    isCoach?:boolean;
+    certificationPath?:string;
 }
 
 export type UserResponseType={
@@ -60,7 +62,30 @@ export type UserResponseType={
   profilePicture?:string;
   profilePictureData: {
     fileContents:string
+    contentType?:string
    }
+  isCoach:boolean;
+  certificationPath?:string;
+}
+
+// בקשת שדרוג ל"מאמן" הממתינה לאישור, כפי שמוחזרת מהשרת (GET /CoachRequest/mine/{userId})
+export type MyCoachRequestType={
+  id:number;
+  userId:number;
+  certificationPath?:string;
+}
+
+// תצוגה מאוחדת של בקשת שדרוג עבור עמוד הניהול (GET /CoachRequest) - כוללת את פרטי
+// המשתמש המבקש (שם/מייל) כדי שהטבלה תוכל להציג אותם בלי לבצע קריאה נוספת.
+export type CoachRequestResponseType={
+  id:number;
+  userId:number;
+  username:string;
+  email:string;
+  certificationPath?:string;
+  certificationData?: {
+    fileContents:string
+  }
 }
 export type ExerciseResponseType={
   id: number;

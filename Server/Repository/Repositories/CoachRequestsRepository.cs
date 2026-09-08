@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Repository.Repositories
 {
@@ -23,38 +22,39 @@ namespace Repository.Repositories
         {
             return await _context.CoachRequestsList.FirstOrDefaultAsync(x => x.Id == id);
         }
-        public async Task<List<Coach>> getAllAsync()
+
+        public async Task<List<CoachRequests>> getAllAsync()
         {
-            return await _context.CoachesList.ToListAsync();
+            return await _context.CoachRequestsList.ToListAsync();
         }
 
-        public async Task<CoachRequests> addAsync(CoachRequests teacher)
+        public async Task<CoachRequests> addAsync(CoachRequests item)
         {
-
             var coachRequest = new CoachRequests
             {
-                FullName = teacher.FullName,
-                Email = teacher.Email,
-                Password = teacher.Password,
-                ProfilePicturePath = teacher.ProfilePicturePath,
-                CertificationPath = teacher.CertificationPath,
+                UserId = item.UserId,
+                CertificationPath = item.CertificationPath,
             };
-            
+
             await _context.CoachRequestsList.AddAsync(coachRequest);
             await _context.Save();
             return coachRequest;
         }
 
-        public async Task updateAsync(Coach teacher)
+        public async Task updateAsync(CoachRequests item)
         {
-            _context.CoachesList.Update(teacher);
+            _context.CoachRequestsList.Update(item);
             await _context.Save();
         }
 
         public async Task deleteByIdAsync(int id)
         {
-            _context.CoachRequestsList.Remove(await getByIdAsync(id));
-            await _context.Save();
+            var existing = await getByIdAsync(id);
+            if (existing != null)
+            {
+                _context.CoachRequestsList.Remove(existing);
+                await _context.Save();
+            }
         }
 
         public Task addFavoriteExercise(AddExerciseRequest requwst)
@@ -62,45 +62,22 @@ namespace Repository.Repositories
             throw new NotImplementedException();
         }
 
-        public Task addFavoritedUser(int userId, int exerciseId)
+        public Task<CoachRequests> addFavoritedUser(int userId, int exerciseId)
         {
             throw new NotImplementedException();
         }
-
-        
 
         public Task deleteFavoritedUserAsync(int userId, int exerciseId)
         {
             throw new NotImplementedException();
         }
 
-        public List<Task<CommentDto>> getAllByIdAsync(int id)
+        public Task<List<CoachRequests>> getFavoriteExercisesAsync(int userId)
         {
             throw new NotImplementedException();
         }
 
-
-        async Task<CoachRequests?> IRepository<CoachRequests>.getByIdAsync(int id)
-        {
-            return await _context.CoachRequestsList.FirstOrDefaultAsync(x => x.Id == id);
-        }
-
-        async Task<List<CoachRequests>> IRepository<CoachRequests>.getAllAsync()
-        {
-            return await _context.CoachRequestsList.ToListAsync();
-        }
-
-        public Task updateAsync(CoachRequests item)
-        {
-            throw new NotImplementedException();
-        }
-
-        Task<CoachRequests> IRepository<CoachRequests>.addFavoritedUser(int userId, int exerciseId)
-        {
-            throw new NotImplementedException();
-        }
-
-        Task<List<CoachRequests>> IRepository<CoachRequests>.getAllByIdAsync(int id)
+        public Task<List<CoachRequests>> getAllByIdAsync(int id)
         {
             throw new NotImplementedException();
         }

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +16,8 @@ namespace Common
         public string? Password { get; set; }
         public string? ProfilePicturePath { get; set; }
         public string? Token { get; set; }
+        public bool IsCoach { get; set; } = false;
+        public string? CertificationPath { get; set; }
         public IFormFile? ProfilePicture { get; set; }
 
         //public List<int>? FavoriteExercises { get; set; }

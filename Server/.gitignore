@@ -361,3 +361,35 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# --- Custom Additions for Fullstack Project ---
+
+# Media and Uploads
+# התעלמות מתיקיות שבהן נשמרות תמונות וסרטונים שהמשתמשים מעלים
+**/uploads/
+**/assets/user-media/
+*.mp4
+*.mov
+*.avi
+*.jpg
+*.jpeg
+*.png
+*.gif
+
+# React / Frontend specific
+# התעלמות מהגדרות של הלקוח במידה והן בתוך תיקייה פנימית
+node_modules/
+/Client/node_modules/
+/Client/build/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# MacOS system files
+.DS_Store
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

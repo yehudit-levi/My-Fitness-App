@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Common;
 using DocumentFormat.OpenXml.Bibliography;
 using Repository.Entity;
@@ -17,18 +17,11 @@ namespace Service
     {
         public MapProFile()
         {
-            CreateMap<Coach, CoachDto>().ReverseMap();
-            CreateMap<CoachRequestDto, CoachDto>().ReverseMap();
             CreateMap<Exercise, ExerciseDto>().ReverseMap();
             CreateMap<User, int>().ConvertUsing(user => user.Id);
             CreateMap<CoachRequestDto, CoachRequests>().ReverseMap();
-            CreateMap<CoachDto, Coach>().ReverseMap();
             CreateMap<User, UserDto>().ReverseMap();
             CreateMap<Comment, CommentDto>().ReverseMap();
-            CreateMap<Task<Coach>, Task<CoachDto>>().ReverseMap();
-            CreateMap<Task<List<CoachRequests>>, Task<List<CoachRequestDto>>>().ReverseMap();
-            CreateMap<Task<List<CoachRequestDto>>, Task<List<CoachRequests>>>().ReverseMap();
-            CreateMap<Task<List<Coach>>, Task<List<CoachDto>>>().ReverseMap();
             CreateMap<Task<Exercise>, Task<ExerciseDto>>().ReverseMap();
             CreateMap<Task<List<Exercise>>, Task<List<ExerciseDto>>>().ReverseMap();
             CreateMap<Task<User>, Task<UserDto>>().ReverseMap();
