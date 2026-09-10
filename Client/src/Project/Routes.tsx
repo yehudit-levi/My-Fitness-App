@@ -7,7 +7,7 @@ import UserForm from './User/userSignup'
 import CoachForm from './Teacher/coachSignup'
 import AppLayout from './AppLayout'
 import AuthGuard from './auth/AuthGuard'
-import Try from './try'
+import ExerciseList from './ExerciseList'
 import DisplayExercise from './Exercise/displayExercise'
 import Home from './Home'
 import PendingCoachesList from './Admin/PendingCoachesList'
@@ -41,7 +41,7 @@ export const router = createBrowserRouter([
                 path: 'exercise',
                 element: (
                     <AuthGuard>
-                        <Try/>
+                        <ExerciseList/>
                     </AuthGuard>
                 ),
             },
