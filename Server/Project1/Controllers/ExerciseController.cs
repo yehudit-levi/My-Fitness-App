@@ -18,11 +18,13 @@ namespace Project1.Controllers
     {
         private readonly IService<ExerciseDto> exerciseService;
         private readonly IService<CommentDto> commentService;
+        private readonly IConfiguration configuration;
 
-        public ExerciseController(IService<ExerciseDto> exerciseService, IService<CommentDto> commentService)
+        public ExerciseController(IService<ExerciseDto> exerciseService, IService<CommentDto> commentService, IConfiguration configuration)
         {
             this.exerciseService = exerciseService;
             this.commentService = commentService;
+            this.configuration = configuration;
         }
 
         // GET: api/Exercise
@@ -49,23 +51,17 @@ namespace Project1.Controllers
             // שליפה מהשירות
             var exercises = await exerciseService.GetAllByCoachIdAsync(id);
 
-            var displayImages = exercises.Select(i => {
-                // המרה בטוחה יותר כדי למנוע null מפתיע
-                var fileResult = ImageHelper.GetFileAsync(i, i.ImageOrVideo);
-
-                return new ExerciseResponse
-                {
-                    Id = i.Id,
-                    Description = i.Description,
-                    Min = i.Min,
-                    ImageOrVideo = i.ImageOrVideo,
-                    Category = i.Category,
-                    Difficulty = i.Difficulty,
-                    PublishDate = i.PublishDate,
-                    VideoUrl = null,
-                    // הצבה רק אם הקובץ באמת קיים
-                    VideoData = fileResult as FileContentResult
-                };
+            var displayImages = exercises.Select(i => new ExerciseResponse
+            {
+                Id = i.Id,
+                Description = i.Description,
+                Min = i.Min,
+                // הוידאו נשמר בענן (Cloudinary) - ImageOrVideo הוא כבר כתובת URL מלאה שהלקוח משתמש בה ישירות.
+                ImageOrVideo = i.ImageOrVideo,
+                Category = i.Category,
+                Difficulty = i.Difficulty,
+                PublishDate = i.PublishDate,
+                VideoUrl = null,
             }).OrderByDescending(e => e.PublishDate).ToList();
 
             return displayImages;
@@ -86,8 +82,6 @@ namespace Project1.Controllers
                 Difficulty = i.Difficulty,
                 PublishDate = i.PublishDate,
                 VideoUrl = null,
-                // טיפול ב-Casting בטוח
-                VideoData = ImageHelper.GetFileAsync(i, i.ImageOrVideo) as FileContentResult,
             }).ToList();
 
             return displayImages.OrderByDescending(e => e.PublishDate).Take(3).ToList();
@@ -123,7 +117,6 @@ namespace Project1.Controllers
                 Category = exercise.Category,
                 Difficulty = exercise.Difficulty,
                 PublishDate = exercise.PublishDate,
-                VideoData = ImageHelper.GetFileAsync(exercise, exercise.ImageOrVideo) as FileContentResult,
                 Comments = await commentService.GetAllByIdAsync(id),
             };
         }
@@ -173,18 +166,24 @@ namespace Project1.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromForm] ExerciseDto value)
         {
-            if (value.VideoUrl != null && value.VideoUrl.Length > 0)
+            // ההעלאה (בתוך UploadVideoAsync) יכולה להיכשל עם ArgumentException אם הקובץ גדול מדי
+            // (מגבלת Cloudinary לוידאו: 100MB) או לא נתמך - תופסים את זה כאן ומחזירים הודעה ברורה.
+            try
             {
-                var filePath = Path.Combine("uploads", Guid.NewGuid().ToString() + Path.GetExtension(value.VideoUrl.FileName));
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                if (value.VideoUrl != null && value.VideoUrl.Length > 0)
                 {
-                    await value.VideoUrl.CopyToAsync(stream);
+                    // הוידאו נשמר בענן (Cloudinary) ולא על דיסק השרת - ImageOrVideo מכיל מעכשיו
+                    // את כתובת ה-URL המלאה של הסרטון, לא נתיב מקומי.
+                    value.ImageOrVideo = await CloudinaryHelper.UploadVideoAsync(configuration, value.VideoUrl, "exercise-videos");
                 }
-                value.ImageOrVideo = filePath;
+                value.PublishDate = DateTime.Now;
+                var exercise = await exerciseService.AddItemAsync(value);
+                return CreatedAtAction(nameof(GetById), new { id = exercise.Id }, exercise);
             }
-            value.PublishDate = DateTime.Now;
-            var exercise = await exerciseService.AddItemAsync(value);
-            return CreatedAtAction(nameof(GetById), new { id = exercise.Id }, exercise);
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPut("update/{id}")]

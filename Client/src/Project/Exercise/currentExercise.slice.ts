@@ -15,11 +15,6 @@ const initialState:CurrentExerciseStateType={currentExercise:{
     coachId: 0,
     imageOrVideo: '',
     videoUrl: undefined,
-    videoData: {
-        contentType: '',
-        fileContents: '',
-        //fileName: 0,
-    },
     comments: []
 }}
 const currentExerciseSlice = createSlice({

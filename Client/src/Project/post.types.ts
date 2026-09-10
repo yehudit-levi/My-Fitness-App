@@ -90,11 +90,6 @@ export type ExerciseResponseType={
   publishDate: string;
   coachId: number;
   videoUrl?: File;
-  videoData: {
-    contentType:string
-    fileContents:string
-    //fileName:Blob| MediaSource
-   };
    comments:CommentType[];
 }
 export type CommentType={

@@ -57,6 +57,25 @@ const ExerciseForm: React.FC<ExerciseFormProps> = ({ onExerciseAdded }) => {
     const [loading, setLoading] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [videoError, setVideoError] = useState('');
+
+    // מכסת ה-Cloudinary (התוכנית החינמית) מגבילה קבצי וידאו ל-100MB - בודקים מראש בצד הלקוח
+    // כדי לתת משוב מיידי במקום לחכות להעלאה שתיכשל בשרת.
+    const MAX_VIDEO_SIZE_BYTES = 100 * 1024 * 1024;
+
+    const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.size > MAX_VIDEO_SIZE_BYTES) {
+                setVideoError('קובץ הוידאו גדול מדי (מקסימום 100MB) - נא לבחור קובץ קטן יותר');
+                e.target.value = '';
+                setExerciseData(prev => ({ ...prev, videoUrl: undefined }));
+                return;
+            }
+            setVideoError('');
+            setExerciseData(prev => ({ ...prev, videoUrl: file }));
+        }
+    };
 
     const [exerciseData, setExerciseData] = useState<ExerciseType>({
         id: 0, description: '', min: '', category: '', difficulty: '',
@@ -125,8 +144,13 @@ const ExerciseForm: React.FC<ExerciseFormProps> = ({ onExerciseAdded }) => {
             await fetchCoachExercises();
             onExerciseAdded();
             handleClose();
-        } catch (error) {
-            alert(isEditMode ? 'שגיאה בעדכון התרגיל' : 'שגיאה בהוספת התרגיל');
+        } catch (error: any) {
+            console.error('Error saving exercise:', error);
+            if (error?.response?.status === 400 && error?.response?.data) {
+                alert(error.response.data);
+            } else {
+                alert(isEditMode ? 'שגיאה בעדכון התרגיל' : 'שגיאה בהוספת התרגיל');
+            }
         } finally { setLoading(false); }
     };
 
@@ -181,7 +205,7 @@ const ExerciseForm: React.FC<ExerciseFormProps> = ({ onExerciseAdded }) => {
                                         </IconButton>
                                     </Tooltip>
                                 </ActionButtons>
-                                {exercise.videoData?.fileContents && (
+                                {exercise.imageOrVideo && (
                                     <video
                                         key={exercise.id}
                                         controls // מוסיף את כפתור ההפעלה והשליטה
@@ -191,7 +215,7 @@ const ExerciseForm: React.FC<ExerciseFormProps> = ({ onExerciseAdded }) => {
                                             height: '100%',
                                             objectFit: 'cover',
                                         }}
-                                        src={`data:video/mp4;base64,${exercise.videoData.fileContents}`}
+                                        src={exercise.imageOrVideo}
                                     >
                                         הדפדפן שלך אינו תומך בהצגת וידאו.
                                     </video>
@@ -244,11 +268,16 @@ const ExerciseForm: React.FC<ExerciseFormProps> = ({ onExerciseAdded }) => {
                             {!isEditMode && (
                                 <Grid item xs={12}>
                                     <label htmlFor="video-upload">
-                                        <Input accept="video/*" id="video-upload" type="file" onChange={(e) => setExerciseData({ ...exerciseData, videoUrl: e.target.files?.[0] })} />
+                                        <Input accept="video/*" id="video-upload" type="file" onChange={handleVideoChange} />
                                         <Button variant="outlined" component="span" fullWidth startIcon={<CloudUploadIcon />} sx={{ py: 1.5, borderStyle: 'dashed' }}>
                                             {exerciseData.videoUrl ? 'וידאו נבחר!' : 'העלאת וידאו לתרגיל'}
                                         </Button>
                                     </label>
+                                    {videoError && (
+                                        <Typography variant="caption" color="error" sx={{ display: 'block', mt: 1 }}>
+                                            {videoError}
+                                        </Typography>
+                                    )}
                                 </Grid>
                             )}
                             <Grid item xs={12}>

@@ -111,7 +111,7 @@ const DisplayExercise: React.FC = () => {
             <Paper elevation={0} sx={{ overflow: 'hidden' }}>
                 <Box sx={{ backgroundColor: '#000' }}>
                     <video controls width="100%" style={{ display: 'block', maxHeight: 480 }}>
-                        <source src={`data:video/mp4;base64,${exercise.currentExercise.videoData?.fileContents || ""}`} type="video/mp4" />
+                        <source src={exercise.currentExercise.imageOrVideo || ""} type="video/mp4" />
                     </video>
                 </Box>
 
