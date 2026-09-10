@@ -3,7 +3,6 @@ import { getSession, isValidToken, removeSession } from './utils'
 
 // בדיקת הרשאות לפני קריאת שרת
 export const authRequestMiddleware = (request: InternalAxiosRequestConfig) => {
-    debugger
     if (request.url === '/Login') {
         return request;
 
