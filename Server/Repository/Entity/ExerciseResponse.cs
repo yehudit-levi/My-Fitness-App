@@ -23,7 +23,6 @@ namespace Repository.Entity
         public int CoachId { get; set; }
         public List<int>? FavoriteExercises { get; set; }
         public IFormFile? VideoUrl { get; set; }
-        public FileContentResult? VideoData { get; set; }
         public List<CommentDto>? Comments { get; set; }
     }
 }

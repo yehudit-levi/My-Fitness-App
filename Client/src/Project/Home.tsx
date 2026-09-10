@@ -276,7 +276,7 @@ export default function Home() {
                                         component="video"
                                         controls
                                         onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                                        src={`data:video/mp4;base64,${exercise.videoData?.fileContents || ""}`}
+                                        src={exercise.imageOrVideo || ""}
                                         title={exercise.description}
                                         sx={{ backgroundColor: '#000' }}
                                     />
