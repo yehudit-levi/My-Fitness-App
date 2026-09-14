@@ -174,13 +174,13 @@ export default function Home() {
                             >
                                 <Slider {...sliderSettings}>
                                     <Box key={1}>
-                                        <img src={require('./public/Images/sport_1635393782-1024x682.jpg')} alt="sports-1" style={{ width: '100%', height: '100%', maxHeight: 420, objectFit: 'cover', display: 'block' }} />
+                                        <img src={require('./public/Images/gym-treadmill-training.jpg')} alt="sports-1" style={{ width: '100%', height: '100%', maxHeight: 420, objectFit: 'cover', display: 'block' }} />
                                     </Box>
                                     <Box key={2}>
-                                        <img src={require('./public/Images/lovepik-sports-mens-running-movements-picture_500595968.jpg')} alt="sports-2" style={{ width: '100%', height: '100%', maxHeight: 420, objectFit: 'cover', display: 'block' }} />
+                                        <img src={require('./public/Images/male-runner-dusk.jpg')} alt="sports-2" style={{ width: '100%', height: '100%', maxHeight: 420, objectFit: 'cover', display: 'block' }} />
                                     </Box>
                                     <Box key={3}>
-                                        <img src={require('./public/Images/1636360815-1715848678895798.jpeg')} alt="sports-3" style={{ width: '100%', height: '100%', maxHeight: 420, objectFit: 'cover', display: 'block' }} />
+                                        <img src={require('./public/Images/man-lifting-barbell.jpg')} alt="sports-3" style={{ width: '100%', height: '100%', maxHeight: 420, objectFit: 'cover', display: 'block' }} />
                                     </Box>
                                 </Slider>
                             </Box>
