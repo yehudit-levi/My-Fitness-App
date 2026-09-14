@@ -141,9 +141,17 @@ const ExerciseForm: React.FC<ExerciseFormProps> = ({ onExerciseAdded }) => {
                 });
                 await addExerciseApi(formData);
             }
-            await fetchCoachExercises();
-            onExerciseAdded();
+            // סוגרים את הדיאלוג קודם, ורק אחרי שהוא סיים להיסגר (טיק הבא) מרעננים את רשימת
+            // התרגילים ופותחים את ה-Snackbar. כשכל השינויים האלה קורים יחד באותו רגע - סגירת
+            // הדיאלוג (שמוסר DOM דרך Portal) יחד עם הוספת כרטיס <video> חדש לרשימה - זה בדיוק
+            // מה שגרם לשגיאת "removeChild ... is not a child of this node": React ניסה להסיר
+            // צומת DOM בדיוק כשצומת אחר עדיין באמצע שינוי. הפרדת שתי המוטציות לשני "רגעים"
+            // נפרדים פותרת את זה.
             handleClose();
+            setTimeout(() => {
+                fetchCoachExercises();
+                onExerciseAdded();
+            }, 0);
         } catch (error: any) {
             console.error('Error saving exercise:', error);
             if (error?.response?.status === 400 && error?.response?.data) {
@@ -245,7 +253,7 @@ const ExerciseForm: React.FC<ExerciseFormProps> = ({ onExerciseAdded }) => {
                             <Grid item xs={12}>
                                 <TextField fullWidth label="תיאור התרגיל" value={exerciseData.description} onChange={(e) => setExerciseData({ ...exerciseData, description: e.target.value })} variant="outlined" />
                             </Grid>
-                            <Grid item xs={6}>
+                            <Grid item xs={4}>
                                 <FormControl fullWidth>
                                     <InputLabel>קהל יעד</InputLabel>
                                     <Select label="קהל יעד" value={exerciseData.min} onChange={(e) => setExerciseData({ ...exerciseData, min: e.target.value })}>
@@ -255,13 +263,28 @@ const ExerciseForm: React.FC<ExerciseFormProps> = ({ onExerciseAdded }) => {
                                     </Select>
                                 </FormControl>
                             </Grid>
-                            <Grid item xs={6}>
+                            <Grid item xs={4}>
                                 <FormControl fullWidth>
                                     <InputLabel>רמה</InputLabel>
                                     <Select label="רמה" value={exerciseData.difficulty} onChange={(e) => setExerciseData({ ...exerciseData, difficulty: e.target.value })}>
                                         <MenuItem value="Easy">מתחילים</MenuItem>
                                         <MenuItem value="Medium">בינוני</MenuItem>
                                         <MenuItem value="Hard">מתקדם</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Grid>
+                            {/* עד עכשיו לא הייתה כאן אפשרות לבחור קטגוריה בכלל - כלומר לכל תרגיל
+                                category היה ריק, ולכן הסינון לפי קטגוריה בעמוד התרגילים (ExerciseList)
+                                אף פעם לא מצא כלום. הערכים כאן (Cardio/Strength/...) חייבים להיות
+                                זהים לערכים שם. */}
+                            <Grid item xs={4}>
+                                <FormControl fullWidth>
+                                    <InputLabel>קטגוריה</InputLabel>
+                                    <Select label="קטגוריה" value={exerciseData.category} onChange={(e) => setExerciseData({ ...exerciseData, category: e.target.value })}>
+                                        <MenuItem value="Cardio">אירובי</MenuItem>
+                                        <MenuItem value="Strength">כוח</MenuItem>
+                                        <MenuItem value="Flexibility">גמישות</MenuItem>
+                                        <MenuItem value="Balance">שיווי משקל</MenuItem>
                                     </Select>
                                 </FormControl>
                             </Grid>

@@ -10,16 +10,22 @@ using System.Linq;
 using Common;
 using Repository.Entity;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // --- 1. הגדרות שירותים (Services) ---
 
+// מוגבל כרגע לכתובת ה-React הרגילה בפיתוח מקומי (npm start) בלבד - לא לכל אתר באינטרנט.
+// כשהפרויקט יעלה לשרת אמיתי (דומיין קבוע), צריך להוסיף כאן גם את כתובת ה-production
+// (למשל "https://my-fitness-project.com") לרשימת ה-WithOrigins.
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
+    options.AddPolicy("AllowClientApp",
         policyBuilder => policyBuilder
-            .AllowAnyOrigin()
+            .WithOrigins("http://localhost:3000", "https://localhost:3000")
             .AllowAnyMethod()
             .AllowAnyHeader()
             .WithExposedHeaders("Content-Disposition", "Access-Control-Allow-Origin"));
@@ -40,6 +46,24 @@ builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 
 builder.Services.AddScoped<IService<CoachRequestDto>, CoachRequestsService>();
 builder.Services.AddScoped<IRepository<CoachRequests>, CoachRequestsRepository>();
+
+// אימות JWT בצד השרת: בלי זה הטוקן שנוצר בהתחברות נוצר אבל אף פעם לא נבדק -
+// כלומר כל בקשה, גם בלי טוקן בכלל, הייתה עוברת. [Authorize] על ה-controllers תלוי בזה.
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+        };
+    });
 
 var app = builder.Build();
 
@@ -72,8 +96,9 @@ app.UseStaticFiles(new StaticFileOptions
 // מאפשר גם שימוש בתיקיית wwwroot הרגילה אם קיימת
 app.UseStaticFiles();
 
-app.UseCors("AllowAll");
+app.UseCors("AllowClientApp");
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

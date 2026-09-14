@@ -11,6 +11,9 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.14" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
+    <!-- מספק את Microsoft.AspNetCore.Identity.PasswordHasher<T> - לא כלול אוטומטית בפרויקט
+         מסוג Microsoft.NET.Sdk (בניגוד ל-Sdk.Web של Project1), צריך חבילה מפורשת. -->
+    <PackageReference Include="Microsoft.Extensions.Identity.Core" Version="6.0.25" />
   </ItemGroup>
 
   <ItemGroup>

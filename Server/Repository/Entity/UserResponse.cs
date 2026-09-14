@@ -19,7 +19,7 @@ namespace Repository.Entity
         public string? Username { get; set; }
         public string? Min { get; set; }
         public string? Email { get; set; }
-        public string? Password { get; set; }
+        // הסיסמה (גם ה-hash שלה) לא נכללת כאן בכוונה - אין שום סיבה שהלקוח יקבל אותה בחזרה.
         public string? ProfilePicturePath { get; set; }
         public string? Token { get; set; }
         // ProfilePicturePath מכיל כעת URL מלא (Cloudinary) - הלקוח משתמש בו ישירות כ-src של תמונה,

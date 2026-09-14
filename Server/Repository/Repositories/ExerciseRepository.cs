@@ -34,6 +34,7 @@ namespace Repository.Repositories
             var ex = new Exercise
             {
                 Description = Exercise.Description,
+                Min = Exercise.Min,
                 ImageOrVideo = Exercise.ImageOrVideo,
                 Category = Exercise.Category,
                 Difficulty = Exercise.Difficulty,
@@ -64,48 +65,48 @@ namespace Repository.Repositories
 
         public async Task<Exercise> addFavoritedUser(int userId, int exerciseId)
         {
-            // תיקון: קודם זה היה שדה-צל יחיד (מועדף אחד בלבד לכל משתמש, שלחיצה חדשה
-            // פשוט דרסה). עכשיו זה יחס many-to-many אמיתי (דרך Exercise.FavoriteExercises /
-            // User.FavoriteExercises) - כך שאפשר לצבור רשימה שלמה של מועדפים לכל משתמש.
-            Exercise ex = await _context.ExercisesList
-                .Include(e => e.FavoriteExercises)
-                .FirstOrDefaultAsync(x => x.Id == exerciseId);
-            User user = await _context.UsersList.FirstOrDefaultAsync(x => x.Id == userId);
-            if (ex != null && user != null)
+            // FavoriteExercises הוא כיום קשר many-to-many אמיתי בין User ל-Exercise (ר' ההערה
+            // המפורטת ב-MyDataContext.cs) - לא שדה-צל בודד כמו שהיה פעם בגרסה ישנה יותר של המודל.
+            // הקוד הישן כאן ניסה לגשת ל-"ExerciseId" כשדה-צל ישיר על User דרך Entry(...).Property(...),
+            // אבל שדה כזה כבר לא קיים במודל הנוכחי (הוחלף בטבלת קישור אמיתית) - זה בדיוק מה שגרם
+            // לשגיאת 500 בעת לחיצה על "הוספה למועדפים": EF Core זרק חריגה כי לא מצא שדה-צל כזה.
+            // התיקון: לטעון את האוסף הקיים (Include) ולהוסיף אליו כמו ב-UserRepository.addFavoriteExercise.
+            Exercise ex = await getByIdAsync(exerciseId);
+            User user = await _context.UsersList.Include(u => u.FavoriteExercises).FirstOrDefaultAsync(x => x.Id == userId);
+            if (ex != null && user != null && !user.FavoriteExercises.Any(f => f.Id == ex.Id))
             {
-                if (!ex.FavoriteExercises.Any(u => u.Id == userId))
-                {
-                    ex.FavoriteExercises.Add(user);
-                    await _context.Save();
-                }
+                user.FavoriteExercises.Add(ex);
+                await _context.Save();
             }
             return ex;
         }
 
         public async Task deleteFavoritedUserAsync(int userId, int exerciseId)
         {
-            Exercise ex = await _context.ExercisesList
-                .Include(e => e.FavoriteExercises)
-                .FirstOrDefaultAsync(x => x.Id == exerciseId);
-            if (ex != null)
+            User user = await _context.UsersList.Include(u => u.FavoriteExercises).FirstOrDefaultAsync(x => x.Id == userId);
+            if (user != null)
             {
-                var favoriteUser = ex.FavoriteExercises.FirstOrDefault(u => u.Id == userId);
-                if (favoriteUser != null)
+                var favorite = user.FavoriteExercises.FirstOrDefault(f => f.Id == exerciseId);
+                if (favorite != null)
                 {
-                    ex.FavoriteExercises.Remove(favoriteUser);
+                    user.FavoriteExercises.Remove(favorite);
                     await _context.Save();
                 }
             }
         }
 
-        // כל התרגילים שהמשתמש הנתון סימן כמועדפים (לרשימת "המועדפים שלי" באזור האישי).
+        // בניגוד למה שחשבתי קודם - זו כן מתודה שנקראת בפועל עבור Exercise: האזור האישי
+        // (personalZone.tsx) קורא לה כדי להציג את "רשימת המועדפים" של המשתמש המחובר
+        // (GET /Exercise/favorites/{userId}). הקריאה הקודמת כאן זרקה NotImplementedException,
+        // ולכן הרשימה תמיד נכשלה בשקט (ה-catch בצד הלקוח רק כותב ל-console, בלי הודעת שגיאה
+        // גלויה) והוצגה כרשימה ריקה למרות שההוספה עצמה הצליחה.
         public async Task<List<Exercise>> getFavoriteExercisesAsync(int userId)
         {
-            return await _context.ExercisesList
-                .Where(e => e.FavoriteExercises.Any(u => u.Id == userId))
-                .OrderByDescending(e => e.PublishDate)
-                .ToListAsync();
+            User user = await _context.UsersList.Include(u => u.FavoriteExercises).FirstOrDefaultAsync(x => x.Id == userId);
+            return user?.FavoriteExercises?.ToList() ?? new List<Exercise>();
         }
+
+      
 
         public async Task<List<Exercise>> getAllByIdAsync(int id)
         {

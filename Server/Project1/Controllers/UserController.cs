@@ -1,7 +1,9 @@
 //using Azure.Core;
 using Common;
 using DocumentFormat.OpenXml.Spreadsheet;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Repository.Entity;
@@ -40,7 +42,6 @@ namespace Project1.Controllers
                     Username = i.Username,
                     Min = i.Min,
                     Email = i.Email,
-                    Password = i.Password,
                     ProfilePicturePath = i.ProfilePicturePath,
                     ProfilePicture = i.ProfilePicture,
                     Token = i.Token,
@@ -76,7 +77,6 @@ namespace Project1.Controllers
                     Username = user.Username,
                     Min = user.Min,
                     Email = user.Email,
-                    Password = user.Password,
                     ProfilePicturePath = user.ProfilePicturePath,
                     ProfilePicture = user.ProfilePicture,
                     Token = user.Token,
@@ -120,6 +120,7 @@ namespace Project1.Controllers
             }
         }
 
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(int id, [FromBody] UserDto value)
         {
@@ -134,7 +135,14 @@ namespace Project1.Controllers
             existing.Username = value.Username;
             existing.Min = value.Min;
             existing.Email = value.Email;
-            existing.Password = value.Password;
+            // הסיסמה כבר לא חוזרת ללקוח (GET לא כולל אותה יותר), אז טופס עדכון הפרופיל
+            // תמיד שולח כאן מחרוזת ריקה אלא אם המשתמש ממש הקליד סיסמה חדשה - רק במקרה כזה
+            // מעדכנים (ומצפינים) אותה, אחרת משאירים את ה-hash הקיים כמו שהוא.
+            if (!string.IsNullOrWhiteSpace(value.Password))
+            {
+                var hasher = new PasswordHasher<UserDto>();
+                existing.Password = hasher.HashPassword(existing, value.Password);
+            }
             if (!string.IsNullOrWhiteSpace(value.ProfilePicturePath))
                 existing.ProfilePicturePath = value.ProfilePicturePath;
             // IsCoach, CertificationPath ו-Token לא ניתנים לעדכון דרך טופס עדכון הפרופיל הרגיל -
@@ -144,6 +152,7 @@ namespace Project1.Controllers
             return Ok();
         }
 
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
@@ -151,6 +160,7 @@ namespace Project1.Controllers
             return Ok();
         }
 
+        [Authorize]
         [HttpPost("AddExercise")]
         public async Task<IActionResult> AddExercise([FromBody] AddExerciseRequest requests)
         {
@@ -166,10 +176,18 @@ namespace Project1.Controllers
             public UserResponse User { get; set; }
         }
 
-        [HttpPost("logIn/{email}/{password}")]
-        public async Task<IActionResult> Login(string email, string password)
+        public class LoginRequest
         {
-            var user = Authenticate(email, password);
+            public string Email { get; set; }
+            public string Password { get; set; }
+        }
+
+        // הועבר מ-route params (logIn/{email}/{password}) ל-body: סיסמה בתוך ה-URL הייתה
+        // נשמרת בלוגים של השרת ובהיסטוריית הדפדפן.
+        [HttpPost("logIn")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        {
+            var user = Authenticate(request.Email, request.Password);
             if (user != null)
             {
                 var token = Generate(user);
@@ -209,11 +227,27 @@ namespace Project1.Controllers
 
         private UserDto Authenticate(string email, string password)
         {
-            var CurrentUser = service.GetAllAsync().Result.FirstOrDefault(x => x.Email.ToLower() == email.ToLower()
-            && x.Password == password);
-            if (CurrentUser != null)
-                return CurrentUser;
-            return null;
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+                return null;
+
+            var currentUser = service.GetAllAsync().Result
+                .FirstOrDefault(x => x.Email != null && x.Email.ToLower() == email.ToLower());
+            if (currentUser == null || string.IsNullOrEmpty(currentUser.Password))
+                return null;
+
+            var hasher = new PasswordHasher<UserDto>();
+            try
+            {
+                var result = hasher.VerifyHashedPassword(currentUser, currentUser.Password, password);
+                return result == PasswordVerificationResult.Success ? currentUser : null;
+            }
+            catch (FormatException)
+            {
+                // משתמשים "ישנים" שנוצרו לפני המעבר ל-hashing עדיין שמורים עם סיסמה בטקסט גלוי -
+                // ה-hasher זורק כאן כי זה לא בפורמט hash תקין. הם לא יוכלו להתחבר עד שהסיסמה
+                // שלהם תוגדר מחדש (מומלץ פשוט למחוק/לאפס את המשתמשים הישנים שנוצרו לצורך בדיקות).
+                return null;
+            }
         }
 
         private string GetMimeType(string filePath)

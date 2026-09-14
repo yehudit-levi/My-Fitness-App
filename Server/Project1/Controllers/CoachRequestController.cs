@@ -1,4 +1,5 @@
 using Common;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Repository.Entity;
@@ -131,6 +132,10 @@ namespace Project1.Controllers
         }
 
         // אישור בקשת שדרוג ע"י המנהל: המשתמש הופך למאמן (IsCoach=true) - לא נוצרת רשומה כפולה.
+        // [Authorize] כאן דורש רק משתמש מחובר (יש token תקין) - האפליקציה עוד לא מבחינה
+        // בין "משתמש רגיל" ל"אדמין" בתוך הטוקן, אז זה לא אכיפת role עדיין, רק סגירת הפרצה
+        // שכל אחד, גם בלי להתחבר בכלל, יכול היה לאשר בקשות מאמן (כולל את שלו).
+        [Authorize]
         [HttpPost("approve/{id}")]
         public async Task<IActionResult> ApproveCoach(int id)
         {
@@ -160,6 +165,7 @@ namespace Project1.Controllers
         }
 
         // דחיית בקשת שדרוג ע"י המנהל - מוחקים את הבקשה, המשתמש נשאר כפי שהיה (לא הופך למאמן).
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

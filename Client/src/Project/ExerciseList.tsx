@@ -80,10 +80,14 @@ const ExerciseList: React.FC = () => {
 
     const hasActiveFilters = !!(categoryFilter || difficultyFilter || genderFilter);
 
+    // תרגיל שסומן ע"י המאמן כ"כולם" (מתאים לכל קהל יעד) צריך להופיע גם כשמסננים
+    // ספציפית לפי "גברים" או "נשים" - לא רק כשבוחרים "כולם" באופן מפורש. בלי התנאי
+    // הנוסף כאן, השוואה מדויקת (exercise.min === genderFilter) הייתה מסתירה תרגילי
+    // "כולם" מכל סינון גברים/נשים, מה שנראה כאילו הסינון "לא עובד טוב".
     const filteredExercises = exercises.filter(exercise =>
         (!categoryFilter || exercise.category === categoryFilter) &&
         (!difficultyFilter || exercise.difficulty === difficultyFilter) &&
-        (!genderFilter || exercise.min === genderFilter));
+        (!genderFilter || exercise.min === genderFilter || exercise.min === 'כולם'));
 
     return (
         <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
@@ -114,10 +118,10 @@ const ExerciseList: React.FC = () => {
                             displayEmpty
                         >
                             <MenuItem value="">הכל</MenuItem>
-                            <MenuItem value="Cardio">Cardio</MenuItem>
-                            <MenuItem value="Strength">Strength</MenuItem>
-                            <MenuItem value="Flexibility">Flexibility</MenuItem>
-                            <MenuItem value="Balance">Balance</MenuItem>
+                            <MenuItem value="Cardio">אירובי</MenuItem>
+                            <MenuItem value="Strength">כוח</MenuItem>
+                            <MenuItem value="Flexibility">גמישות</MenuItem>
+                            <MenuItem value="Balance">שיווי משקל</MenuItem>
                         </Select>
                     </FormControl>
 
@@ -131,12 +135,17 @@ const ExerciseList: React.FC = () => {
                             displayEmpty
                         >
                             <MenuItem value="">הכל</MenuItem>
-                            <MenuItem value="Easy">Easy</MenuItem>
-                            <MenuItem value="Medium">Medium</MenuItem>
-                            <MenuItem value="Hard">Hard</MenuItem>
+                            <MenuItem value="Easy">מתחילים</MenuItem>
+                            <MenuItem value="Medium">בינוני</MenuItem>
+                            <MenuItem value="Hard">מתקדם</MenuItem>
                         </Select>
                     </FormControl>
 
+                    {/* הערכים כאן (זכר/נקבה/כולם) חייבים להיות זהים לערכים שנשמרים בטופס הוספת
+                        תרגיל (Teacher/coachPersonalZone.tsx) - אחרת הסינון לא מוצא כלום, כי
+                        ההשוואה היא על הערך הגולמי (exercise.min === genderFilter) ולא על הטקסט
+                        המוצג. קודם היה כאן "אחר" בעוד שבטופס ההוספה יש "כולם" - אף תרגיל לא
+                        יכול היה להיות מסונן לפי האפשרות השלישית. */}
                     <FormControl size="small" sx={{ minWidth: 180 }}>
                         <InputLabel id="gender-filter-label">מגדר</InputLabel>
                         <Select<string>
@@ -147,9 +156,9 @@ const ExerciseList: React.FC = () => {
                             displayEmpty
                         >
                             <MenuItem value="">הכל</MenuItem>
-                            <MenuItem value="זכר">זכר</MenuItem>
-                            <MenuItem value="נקבה">נקבה</MenuItem>
-                            <MenuItem value="אחר">אחר</MenuItem>
+                            <MenuItem value="זכר">גברים</MenuItem>
+                            <MenuItem value="נקבה">נשים</MenuItem>
+                            <MenuItem value="כולם">כולם</MenuItem>
                         </Select>
                     </FormControl>
 

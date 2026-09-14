@@ -27,6 +27,6 @@ export const getUserByIdApi = async (id: number): Promise<UserResponseType> => {
   return response.data
 }
 export const loginUserApi = async (email: string,password:string): Promise<AuthUserType>  => {
-   const response= await axios.post(`/User/logIn/${email}/${password}`)
+   const response= await axios.post(`/User/logIn`, { email, password })
     return response.data
 }

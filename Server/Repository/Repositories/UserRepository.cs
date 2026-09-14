@@ -1,4 +1,5 @@
 using Common;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Repository.Entity;
 using Repository.Interfaces;
@@ -38,7 +39,13 @@ namespace Repository.Repositories
                 Email = item.Email,
                 Password = item.Password,
                 ProfilePicturePath = item.ProfilePicturePath,
-            };           
+            };
+
+            // הסיסמה נשמרת כ-hash (לא כטקסט גלוי) - כדי שגם עם גישה למסד הנתונים
+            // אי אפשר יהיה לדעת מה הסיסמה האמיתית של אף משתמש.
+            var hasher = new PasswordHasher<User>();
+            user.Password = hasher.HashPassword(user, item.Password);
+
             await _context.UsersList.AddAsync(user);
             await _context.Save();
             return user;
@@ -68,20 +75,20 @@ namespace Repository.Repositories
 
         public async Task addFavoriteExercise(AddExerciseRequest requwst)
         {
-
-            //User currentUser = await _context.UsersList.FirstOrDefaultAsync(x => x.Id == requwst.IdUser);
-            //if (currentUser != null)
-            //{
-            //    foreach (var item in requwst.IdExercises)
-            //    {
-            //        Exercise ex = await _context.ExercisesList.FirstOrDefaultAsync(x => x.Id == item);
-            //        if (ex != null)
-            //            currentUser.FavoriteExercises.Add(ex);
-            //    }
-            //    await _context.Save();
-            //}
-            throw new NotImplementedException();
-
+            // Include הכרחי כאן: בלי לטעון את FavoriteExercises הקיימים מה-DB קודם, EF Core
+            // לא יודע אילו קשרים כבר קיימים - הבדיקה למטה שמונעת כפילויות לא הייתה עובדת נכון בלעדיו.
+            User currentUser = await _context.UsersList.Include(u => u.FavoriteExercises)
+                .FirstOrDefaultAsync(x => x.Id == requwst.IdUser);
+            if (currentUser != null && requwst.IdExercises != null)
+            {
+                foreach (var item in requwst.IdExercises)
+                {
+                    Exercise ex = await _context.ExercisesList.FirstOrDefaultAsync(x => x.Id == item);
+                    if (ex != null && !currentUser.FavoriteExercises.Any(f => f.Id == ex.Id))
+                        currentUser.FavoriteExercises.Add(ex);
+                }
+                await _context.Save();
+            }
         }
 
         public Task addFavoritedUser(int userId, int exerciseId)
